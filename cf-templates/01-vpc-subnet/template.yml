@@ -1,0 +1,464 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: 'AWS Acct: procore-it-pdp-dev | VPC subnets, route tables, routes, exports'
+
+# ref: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html
+
+# -- ---------------------------------------------------------------------------
+# VPC, subnets (9) (3 public, 6 private across x3 AZ's)
+# The public and private subnets are spread across three Availability Zones
+#
+# There is one public subnet and two private subnets per AZ (3 subnets * 3 AZ's = 9 subnets)
+#
+# This cfn creates an Internet Gateway, with a default route on each of the three public subnets.
+#
+# -- ---------------------------------------------------------------------------
+
+Parameters:
+  ENV:
+    Description: Provide the environment name (-test, -dev, -staging, nothing '' for prod)
+    Type: String
+    Default: ''
+# only used if VPCID needs to be hard coded (if no output from a previous stack)
+#  VPCID:
+#    Description: 'VPC ID'
+#    Type: String
+#  VPC_CIDR:
+#    Description: 'CIDR block of VPC'
+#    Type: String
+#    Default: 10.0.0.0/16
+
+Resources:
+
+  ## SUBNETS (3 AZ's) | x3 public (1 ea AZ) | x6 private (x2 ea AZ)
+  # us-west-2a, us-west-2b, us-west-2c
+  SubnetPublic1:
+    Type: AWS::EC2::Subnet
+    # DependsOn: VPC
+    Properties:
+      AvailabilityZone: us-west-2a
+      #VpcId: !Ref VPCID  # for procore-it-edp-prod (where VPC is created manually, not by cloudformation)
+      # for procore-it-dev (where VPC is created by cloudformation)
+      VpcId:
+        Fn::ImportValue:
+          !Sub pdp-dev-vpc
+      CidrBlock: 10.0.1.0/24
+      Tags:
+        - Key: name
+          Value: !Sub pdp-dev-vpc-subnet-public1-us-west-2a
+
+  SubnetPrivate1:
+    Type: AWS::EC2::Subnet
+    # DependsOn: VPC
+    Properties:
+      AvailabilityZone: us-west-2a
+      # VpcId: !Ref VPCID
+      VpcId:
+        Fn::ImportValue:
+          !Sub pdp-dev-vpc
+      CidrBlock: 10.0.4.0/24
+      Tags:
+        - Key: name
+          Value: !Sub pdp-dev-vpc-subnet-private1-us-west-2a
+
+  SubnetPrivate4:
+    Type: AWS::EC2::Subnet
+    # DependsOn: VPC
+    Properties:
+      AvailabilityZone: us-west-2a
+      # VpcId: !Ref VPCID
+      VpcId:
+        Fn::ImportValue:
+          !Sub pdp-dev-vpc
+      CidrBlock: 10.0.7.0/24
+      Tags:
+        - Key: name
+          Value: !Sub pdp-dev-vpc-subnet-private4-us-west-2a
+
+  # --
+  SubnetPublic2:
+    Type: AWS::EC2::Subnet
+    # DependsOn: VPC
+    Properties:
+      AvailabilityZone: us-west-2b
+      # VpcId: !Ref VPCID
+      VpcId:
+        Fn::ImportValue:
+          !Sub pdp-dev-vpc
+      CidrBlock: 10.0.2.0/24
+      Tags:
+        - Key: name
+          Value: !Sub pdp-dev-vpc-subnet-public2-us-west-2b
+
+  SubnetPrivate2:
+    Type: AWS::EC2::Subnet
+    # DependsOn: VPC
+    Properties:
+      AvailabilityZone: us-west-2b
+      # VpcId: !Ref VPCID
+      VpcId:
+        Fn::ImportValue:
+          !Sub pdp-dev-vpc
+      CidrBlock: 10.0.5.0/24
+      Tags:
+        - Key: name
+          Value: !Sub pdp-dev-vpc-subnet-private2-us-west-2b
+
+  SubnetPrivate5:
+    Type: AWS::EC2::Subnet
+    # DependsOn: VPC
+    Properties:
+      AvailabilityZone: us-west-2b
+      # VpcId: !Ref VPCID
+      VpcId:
+        Fn::ImportValue:
+          !Sub pdp-dev-vpc
+      CidrBlock: 10.0.8.0/24
+      Tags:
+        - Key: name
+          Value: !Sub pdp-dev-vpc-subnet-private5-us-west-2b
+
+  SubnetPublic3:
+    Type: AWS::EC2::Subnet
+    # DependsOn: VPC
+    Properties:
+      AvailabilityZone: us-west-2c
+      # VpcId: !Ref VPCID
+      VpcId:
+        Fn::ImportValue:
+          !Sub pdp-dev-vpc
+      CidrBlock: 10.0.3.0/24
+      Tags:
+        - Key: name
+          Value: !Sub pdp-dev-vpc-subnet-public3-us-west-2c
+
+  SubnetPrivate3:
+    Type: AWS::EC2::Subnet
+    # DependsOn: VPC
+    Properties:
+      AvailabilityZone: us-west-2c
+      # VpcId: !Ref VPCID
+      VpcId:
+        Fn::ImportValue:
+          !Sub pdp-dev-vpc
+      CidrBlock: 10.0.6.0/24
+      Tags:
+        - Key: name
+          Value: !Sub pdp-dev-vpc-subnet-private3-us-west-2c
+
+  SubnetPrivate6:
+    Type: AWS::EC2::Subnet
+    # DependsOn: VPC
+    Properties:
+      AvailabilityZone: us-west-2c
+      # VpcId: !Ref VPCID
+      VpcId:
+        Fn::ImportValue:
+          !Sub pdp-dev-vpc
+      CidrBlock: 10.0.9.0/24
+      Tags:
+        - Key: name
+          Value: !Sub pdp-dev-vpc-subnet-private6-us-west-2c
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    # DependsOn: VPC
+    Properties:
+      Tags:
+        - Key: name
+          Value: !Sub pdp-dev-vpc-igw
+
+  # todo: how to name?
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    DependsOn: InternetGateway
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      # VpcId: !Ref VPCID
+      VpcId:
+        Fn::ImportValue:
+          !Sub pdp-dev-vpc
+    # no tags allowed
+
+  # -- -------------------------------------------------------------------------
+  # 1. add 1 public route table
+  # 2. add route to Internet Gateway (route to internet gateway is what makes a subnet 'public')
+  # 3. associate route table to each public subnet (x3 public)
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    DependsOn:
+      - InternetGateway
+      - InternetGatewayAttachment
+    Properties:
+      # VpcId: !Ref VPCID
+      VpcId:
+        Fn::ImportValue:
+          !Sub pdp-dev-vpc
+      Tags:
+        - Key: name
+          Value: !Sub pdp-dev-vpc-rtb-public
+
+  # 2. add route to Internet Gateway (1 public route only)
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: PublicRouteTable
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+      # no tags allowed
+
+  # 3. associate route table with x3 public subnets
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn: PublicRoute
+    Properties:
+      SubnetId: !Ref SubnetPublic1
+      RouteTableId: !Ref PublicRouteTable
+      # no tags allowed
+
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn: PublicRoute
+    Properties:
+      SubnetId: !Ref SubnetPublic2
+      RouteTableId: !Ref PublicRouteTable
+      # no tags allowed
+
+  PublicSubnet3RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn: PublicRoute
+    Properties:
+      SubnetId: !Ref SubnetPublic3
+      RouteTableId: !Ref PublicRouteTable
+      # no tags allowed
+
+  # -- -------------------------------------------------------------------------
+  # add 6 private route tables, associate each to a subnet
+  # (why are routes not needed to be added to route tables?)
+
+  # begin: US-WEST-2a  ( private1, private4 subnets)
+  PrivateRouteTable1:
+    Type: AWS::EC2::RouteTable
+    # DependsOn: VPC
+    Properties:
+      # VpcId: !Ref VPCID
+      VpcId:
+        Fn::ImportValue:
+          !Sub pdp-dev-vpc
+      Tags:
+        - Key: name
+          Value: !Sub pdp-dev-vpc-rtb-private1-us-west-2a
+
+  PrivateSubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+      - SubnetPrivate1
+      - PrivateRouteTable1
+    Properties:
+      SubnetId: !Ref SubnetPrivate1
+      RouteTableId: !Ref PrivateRouteTable1
+      # no tags allowed
+
+  PrivateRouteTable4:
+    Type: AWS::EC2::RouteTable
+    # DependsOn: VPC
+    Properties:
+      # VpcId: !Ref VPCID
+      VpcId:
+        Fn::ImportValue:
+          !Sub pdp-dev-vpc
+      Tags:
+        - Key: name
+          Value: !Sub pdp-dev-vpc-rtb-private4-us-west-2a
+
+  PrivateSubnetRouteTableAssociation4:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+      - SubnetPrivate4
+      - PrivateRouteTable4
+    Properties:
+      SubnetId: !Ref SubnetPrivate4
+      RouteTableId: !Ref PrivateRouteTable4
+      # no tags allowed
+
+  # -- end: US-WEST-2A
+
+  # -- -------------------------------------------------------------------------
+  # -- begin: US-WEST-2b
+  PrivateRouteTable2:
+    Type: AWS::EC2::RouteTable
+    # DependsOn: VPC
+    Properties:
+      # VpcId: !Ref VPCID
+      VpcId:
+        Fn::ImportValue:
+          !Sub pdp-dev-vpc
+      Tags:
+        - Key: name
+          Value: !Sub pdp-dev-vpc-rtb-private2-us-west-2b
+
+  PrivateSubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+      - SubnetPrivate2
+      - PrivateRouteTable2
+    Properties:
+      SubnetId: !Ref SubnetPrivate2
+      RouteTableId: !Ref PrivateRouteTable2
+      # no tags allowed
+
+  PrivateRouteTable5:
+    Type: AWS::EC2::RouteTable
+    # DependsOn: VPC
+    Properties:
+      # VpcId: !Ref VPCID
+      VpcId:
+        Fn::ImportValue:
+          !Sub pdp-dev-vpc
+      Tags:
+        - Key: name
+          Value: !Sub pdp-dev-vpc-rtb-private5-us-west-2b
+
+  PrivateSubnetRouteTableAssociation5:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+      - SubnetPrivate5
+      - PrivateRouteTable5
+    Properties:
+      SubnetId: !Ref SubnetPrivate5
+      RouteTableId: !Ref PrivateRouteTable5
+      # no tags allowed
+
+  # -- end: US-WEST-2b
+
+  # -- -------------------------------------------------------------------------
+  # -- begin: US-WEST-2c
+  PrivateRouteTable3:
+    Type: AWS::EC2::RouteTable
+    # DependsOn: VPC
+    Properties:
+      # VpcId: !Ref VPCID
+      VpcId:
+        Fn::ImportValue:
+          !Sub pdp-dev-vpc
+      Tags:
+        - Key: name
+          Value: !Sub pdp-dev-vpc-rtb-private3-us-west-2c
+
+  PrivateSubnetRouteTableAssociation3:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+      - SubnetPrivate3
+      - PrivateRouteTable3
+    Properties:
+      SubnetId: !Ref SubnetPrivate3
+      RouteTableId: !Ref PrivateRouteTable3
+      # no tags allowed
+
+  PrivateRouteTable6:
+    Type: AWS::EC2::RouteTable
+    # DependsOn: VPC
+    Properties:
+      # VpcId: !Ref VPCID
+      VpcId:
+        Fn::ImportValue:
+          !Sub pdp-dev-vpc
+      Tags:
+        - Key: name
+          Value: !Sub pdp-dev-vpc-rtb-private6-us-west-2c
+
+  PrivateSubnetRouteTableAssociation6:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+      - SubnetPrivate6
+      - PrivateRouteTable6
+    Properties:
+      SubnetId: !Ref SubnetPrivate6
+      RouteTableId: !Ref PrivateRouteTable6
+  # -- end: US-WEST-2c
+
+  # -- ---------------------------------------------------------------------------
+  # ? how to specify: public ipv4 address pool: 'Amazon's pool of IPv4 addresses'
+
+# -- ---------------------------------------------------------------------------
+Outputs:
+  #  VPCID:
+  #    Description: A reference to the created VPC
+  #    Value: !Ref VPCID
+  #    Export:
+  #      Name: !Sub pdp-dev-vpc
+
+  SubnetPublic1:
+    Description: A reference to the public subnet on us-west-2b
+    Value: !Ref SubnetPublic1
+    Export:
+      Name: !Sub pdp-dev-vpc-subnet-public1-us-west-2a
+
+  SubnetPublic2:
+    Description: A reference to the public subnet on us-west-2b
+    Value: !Ref SubnetPublic2
+    Export:
+      Name: !Sub pdp-dev-vpc-subnet-public2-us-west-2b
+
+  SubnetPublic3:
+    Description: A reference to the public subnet on us-west-2c
+    Value: !Ref SubnetPublic3
+    Export:
+      Name: !Sub pdp-dev-vpc-subnet-public3-us-west-2c
+
+  SubnetPrivate1:
+    Description: A reference to the private subnet (#1) on us-west-2a
+    Value: !Ref SubnetPrivate1
+    Export:
+      Name: !Sub pdp-dev-vpc-subnet-private1-us-west-2a
+
+  SubnetPrivate4:
+    Description: A reference to the private subnet (#2) on us-west-2a
+    Value: !Ref SubnetPrivate4
+    Export:
+      Name: !Sub pdp-dev-vpc-subnet-private4-us-west-2a
+
+  SubnetPrivate2:
+    Description: A reference to the private subnet (#1) on us-west-2b
+    Value: !Ref SubnetPrivate2
+    Export:
+      Name: !Sub pdp-dev-vpc-subnet-private2-us-west-2b
+
+  SubnetPrivate5:
+    Description: A reference to the private subnet (#2) on us-west-2b
+    Value: !Ref SubnetPrivate5
+    Export:
+      Name: !Sub pdp-dev-vpc-subnet-private5-us-west-2b
+
+  SubnetPrivate3:
+    Description: A reference to the private subnet (#1) on us-west-2c
+    Value: !Ref SubnetPrivate3
+    Export:
+      Name: !Sub pdp-dev-vpc-subnet-private3-us-west-2c
+
+  SubnetPrivate6:
+    Description: A reference to the private subnet (#2) on us-west-2c
+    Value: !Ref SubnetPrivate6
+    Export:
+      Name: !Sub pdp-dev-vpc-subnet-private6-us-west-2c
+
+  InternetGateway:
+    Description: A reference to the created internet gateway
+    Value: !Ref InternetGateway
+    Export:
+      Name: !Sub pdp-dev-vpc-subnet-internet-gateway
+
+  InternetGatewayAttachment:
+    Description: A reference to the created internet gateway attachment
+    Value: !Ref InternetGatewayAttachment
+    Export:
+      Name: !Sub pdp-dev-vpc-subnet-internet-gateway-attachment
+
+  #  PublicSubnets:
+  #    Description: A list of the public subnets
+  #    Value: !Join [ ",", [ !Ref PublicSubnet1, !Ref PublicSubnet2 ] ]
+
+  #  PrivateSubnets:
+  #    Description: A list of the private subnets
+  #    Value: !Join [ ",", [ !Ref PrivateSubnet1, !Ref PrivateSubnet2 ] ]

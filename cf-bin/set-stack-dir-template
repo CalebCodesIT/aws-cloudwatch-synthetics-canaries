@@ -1,0 +1,8 @@
+#!/bin/bash
+# copy this to set-stack-dir and do not commit the file
+
+# -- effective at top
+export STACK_DIR=cf-templates/00-vpc
+
+# --
+printf "\nSTACK_DIR=[${STACK_DIR}]"

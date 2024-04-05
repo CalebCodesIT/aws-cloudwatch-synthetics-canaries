@@ -1,0 +1,93 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: 'VPC'
+
+# ref:
+#   https://procoretech.atlassian.net/servicedesk/customer/portal/38/IT-180802
+#   https://procoretech.atlassian.net/wiki/spaces/IE/pages/597229838/RFC+1918+net+blocks+and+their+use
+#   https://procoretech.atlassian.net/wiki/spaces/IE/pages/579534942/Transit+Gateway+Architecture
+#   https://procoretech.atlassian.net/wiki/spaces/IE/pages/579567838/Transit+Gateway+Connection+Process
+
+
+# run with:
+#   cd cf-bin
+#   ./deploy 00-vpc
+
+Parameters:
+  ENV:
+    Description: 'Environment | dev, test, staging, prod'
+    Type: String
+    Default: ''
+  VPCCIDR:
+    Description: 'Assigned CIDR block for VPC'
+    Type: String
+    Default: 10.0.0.0/16
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VPCCIDR
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: name
+          Value: !Sub vpc${ENV}
+#        - Key: division
+#          Value: ''
+#        - Key: business-unit
+#          Value: 'Information Technology'
+#        - Key: department
+#          Value: 'Data Analytics and Infrastructure'
+#        - Key: owner-team
+#          Value: 'Data Platform'
+#        - Key: owner-contact
+#          Value: 'email'
+#        - Key: owner-contact-manager'
+#          Value: 'email@company.com'
+#        - Key: env
+#          Value: !Sub ${ENV}
+
+# -- ---------------------------------------------------------------------------
+Outputs:
+  VPCId:
+    Description: the ID of the VPC
+    Value: !Ref VPC
+    Export:
+      Name: !Sub VPCId
+      # Name: !Sub "${AWS::StackName}-VPCId"
+
+  StackId:
+    Description: The ID of the associated stack
+    Value: !Ref AWS::StackId
+    Export:
+      Name: !Sub StackId
+      # Name: !Sub "${AWS::StackName}-StackId"
+
+  # does not work
+  #  StackArn:
+  #    Description: The ARN of the associated stack
+  #    Value: !Ref AWS::StackArn
+  #    Export:
+  #      Name: !Sub StackArn
+
+  StackArn:
+    Description: The ARN of the associated stack
+    Value: !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}/*"
+    Export:
+      Name: !Sub StackArn
+      # Name: !Sub "${AWS::StackName}-StackArn"
+
+  VpcArn:
+    Description: The ARN of the VPC
+    Value: !Sub "arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:vpc/${VPC}"
+    Export:
+      Name: !Sub VpcArn
+      # Name: !Sub "${AWS::StackName}-VpcArn"
+
+# does not work
+#  VpcArn:
+#    Description: The ARN of the VPC
+#    Value: !GetAtt VPC.VpcArn
+#    Export:
+#      Name: !Sub VpcArn

@@ -1,0 +1,18 @@
+#!/bin/bash
+export STACK_NAME=vpc
+
+#export STACK_TAGS="name=
+# division=
+# business-unit=
+# department=
+# owner-team=
+# owner-contact=
+# owner-contact-manager=
+# env=prod"
+
+export CFT=cf-templates/00-vpc/template.yml
+
+# --
+printf "\nSTACK_NAME=[${STACK_NAME}]"
+printf "\nSTACK_TAGS=[${STACK_TAGS}]"
+printf "\nCFT=[${CFT}]"

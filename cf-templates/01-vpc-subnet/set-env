@@ -1,0 +1,17 @@
+#!/bin/bash
+export STACK_NAME=vpc-subnets
+#export STACK_TAGS="name=
+# division=
+# business-unit=
+# department=Data Analytics
+# owner-team=
+# owner-contact=
+# owner-contact-manager=
+# env=prod"
+
+export CFT=cf-templates/02-vpc-subnet/template.yml
+
+# --
+printf "\nSTACK_NAME=[${STACK_NAME}]"
+printf "\nSTACK_TAGS=[${STACK_TAGS}]"
+printf "\nCFT=[${CFT}]"
