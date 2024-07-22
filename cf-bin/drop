@@ -1,0 +1,13 @@
+#!/bin/bash
+source ./set-env delete-stack
+
+# no output if stack does not exist
+# no output if success?
+# test output if cannot drop stack
+
+aws cloudformation delete-stack \
+  --profile ${AWS_PROFILE} \
+  --stack-name ${STACK_NAME} |
+  tee 2>&1 ${LOGFILE}
+
+popd >/dev/null

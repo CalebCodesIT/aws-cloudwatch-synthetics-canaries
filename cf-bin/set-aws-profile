@@ -1,0 +1,10 @@
+#!/bin/bash
+# set AWS profile
+# $HOME/.aws/config
+# $HOME/.aws/credentials
+
+# -- effective at top
+export AWS_PROFILE=crs
+
+# --
+printf "\nAWS_PROFILE=[${AWS_PROFILE}]"

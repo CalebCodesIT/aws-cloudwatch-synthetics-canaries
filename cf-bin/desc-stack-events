@@ -1,0 +1,9 @@
+#!/bin/bash
+source ./set-env desc-stack-events
+
+aws cloudformation describe-stack-events \
+  --profile ${AWS_PROFILE} \
+  --stack-name ${STACK_NAME} \
+  | tee 2>&1 ${LOGFILE}
+
+popd > /dev/null

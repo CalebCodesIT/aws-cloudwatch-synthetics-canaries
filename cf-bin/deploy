@@ -1,0 +1,25 @@
+#!/bin/bash
+clear
+
+# ref
+# https://awscli.amazonaws.com/v2/documentation/api/latest/reference/cloudformation/deploy.html
+
+# ---
+# todo: if set-stack-dir exists, source
+source ./set-env deploy
+
+aws cloudformation deploy \
+  --profile ${AWS_PROFILE} \
+  --template-file ${CFT} \
+  --stack-name ${STACK_NAME} \
+  | tee 2>&1 ${LOGFILE}
+
+# --parameter-overrides ENV=${ENV} |
+#printf "\nWaiting for stack creation completion..."
+#aws cloudformation wait \
+#  --stack-name ${STACK_NAME} \
+#  stack-create-complete
+#
+#printf "\nStack: [$STACK_NAME] creation complete"
+
+popd > /dev/null

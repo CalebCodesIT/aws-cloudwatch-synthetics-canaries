@@ -1,0 +1,27 @@
+#!/bin/bash
+ACTION=$1
+export ENV=dev
+#export ENV=test
+#export ENV=staging
+#export ENV=prod
+# --
+printf "\nENV=[${ENV}]"
+
+# --
+source ./set-aws-profile
+source ./set-stack-dir
+
+pushd . > /dev/null
+cd ..
+pwd
+
+source ${STACK_DIR}/set-env   # all vars needed by: aws cloudformation deploy, in set-env
+# error stack dir does not exist
+# create sample vpc and delete - delete me
+
+LOGFILE=logs/${STACK_NAME}-${AWS_PROFILE}-${ENV}-${ACTION}.log
+rm -f ${LOGFILE}
+
+printf "\n\n"
+read -p "Press any key to deploy CFT: [${CFT}]"
+printf "\n"
